@@ -1,111 +1,70 @@
-let videoElement;
+let video = null;
+let stream = null;
 
+async function startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API is not available. Use HTTPS.");
+    }
 
-export async function startCamera(){
+    const constraints = {
+        audio: false,
+        video: {
+            facingMode: {
+                exact: "environment"
+            },
+            width: {
+                ideal: 1280
+            },
+            height: {
+                ideal: 720
+            }
+        }
+    };
 
+    try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (e) {
+        stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {
+                facingMode: "environment"
+            }
+        });
+    }
 
-if(!navigator.mediaDevices){
+    video = document.createElement("video");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("autoplay", "");
+    video.setAttribute("muted", "");
 
-throw new Error(
-"Camera API is not available. Use HTTPS."
-);
+    video.srcObject = stream;
 
+    await video.play();
+
+    document.body.appendChild(video);
+
+    video.style.position = "fixed";
+    video.style.top = "0";
+    video.style.left = "0";
+    video.style.width = "100vw";
+    video.style.height = "100vh";
+    video.style.objectFit = "cover";
+    video.style.zIndex = "-1";
+
+    return video;
 }
 
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
 
-
-videoElement =
-document.createElement("video");
-
-
-
-videoElement.autoplay = true;
-
-videoElement.playsInline = true;
-
-
-
-videoElement.style.position =
-"fixed";
-
-videoElement.style.top =
-"0";
-
-videoElement.style.left =
-"0";
-
-videoElement.style.width =
-"100%";
-
-videoElement.style.height =
-"100%";
-
-videoElement.style.objectFit =
-"cover";
-
-videoElement.style.zIndex =
-"-1";
-
-
-
-const stream =
-await navigator.mediaDevices.getUserMedia({
-
-video: {
-
-facingMode:{
-ideal:"environment"
+    if (video) {
+        video.remove();
+        video = null;
+    }
 }
 
-},
-
-audio:false
-
-});
-
-
-
-videoElement.srcObject =
-stream;
-
-
-
-document.body.appendChild(
-videoElement
-);
-
-
-
-return videoElement;
-
-
-}
-
-
-
-export function stopCamera(){
-
-
-if(videoElement &&
-videoElement.srcObject){
-
-
-videoElement.srcObject
-.getTracks()
-.forEach(track=>{
-
-track.stop();
-
-});
-
-
-videoElement.remove();
-
-
-videoElement=null;
-
-
-}
-
-
-}
+window.startCamera = startCamera;
+window.stopCamera = stopCamera;
